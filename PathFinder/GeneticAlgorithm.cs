@@ -7,18 +7,17 @@ namespace PathFinder
 {
     class GeneticAlgorithm
     {
-       
         // variables
-        int[,] population;  // one row for each chromosome, 
+        int[,] population; // one row for each chromosome, 
         double[] fitness;
-        int populationSize = 100;  // default values
+        int populationSize = 100; // default values
         int maxSteps = 35;
         int tournamentSize = 2;
         Random random;
         int[] child;
         double mutationRate;
         int length;
-   
+
 
         public GeneticAlgorithm(int populationSize, int tournamentSize
             , double mutationRate, int maxSteps)
@@ -27,27 +26,25 @@ namespace PathFinder
             // population size, tournament size, mutation rate,
             // chromosome length (= 2 times max-steps as 2 bits for each step)
 
-            this.populationSize = populationSize;  // population size
-            this.tournamentSize = tournamentSize;          // tournament size
-            this.maxSteps = maxSteps;       // maximum steps 
-            this.mutationRate=mutationRate;      // mutation rate   
-            length=this.maxSteps*2;   // chromosome length
-            population = new int[this.populationSize,length];
+            this.populationSize = populationSize; // population size
+            this.tournamentSize = tournamentSize; // tournament size
+            this.maxSteps = maxSteps; // maximum steps 
+            this.mutationRate = mutationRate; // mutation rate   
+            length = this.maxSteps * 2; // chromosome length
+            population = new int[this.populationSize, length];
             fitness = new double[this.populationSize];
-            child = new int[length];  // placeholder for child
+            child = new int[length]; // placeholder for child
             random = new Random();
-          
         }
 
-       
+
         public void initialise()
         {
             // initialise each string with 0,1s at random
             int j, k;
             for (j = 0; j < populationSize; j++)
-                for (k = 0; k < length; k++)
-                    population[j,k] = random.Next(2);
-   
+            for (k = 0; k < length; k++)
+                population[j, k] = random.Next(2);
         }
 
         public int select()
@@ -57,7 +54,7 @@ namespace PathFinder
 
             int i, picked, bestIndex;
             double bestFit;
-            
+
             // pick one
             picked = random.Next(populationSize);
             bestFit = fitness[picked];
@@ -73,12 +70,12 @@ namespace PathFinder
                     bestIndex = picked;
                 }
             }
-            return (picked);	// return index of best one
 
+            return (picked); // return index of best one
         }
 
         // crossover 
-        public int [] onept_crossover(int parent1, int parent2)
+        public int[] onept_crossover(int parent1, int parent2)
         {
             // one point
             int crossPoint, j;
@@ -89,10 +86,10 @@ namespace PathFinder
             // first part of child is copied from parent1, and 2nd
             // part from parent2
             for (j = 0; j < crossPoint; j++)
-                child[j] = population[parent1,j];
+                child[j] = population[parent1, j];
 
             for (j = crossPoint; j < (length); j++)
-                child[j] = population[parent2,j];
+                child[j] = population[parent2, j];
             return (child);
         }
 
@@ -100,13 +97,13 @@ namespace PathFinder
         {
             //TODO MAKE SURE THIS IS ACTUALLY WORKING AS EXPECTED 
             // two points
-            int crossPoint1, crossPoint2, j ;
+            int crossPoint1, crossPoint2, j;
 
             // pick crosspoint1 at random, has to leave enough room for at least one gene after crosspoint 2 (otherwise it'd just be a 1 point crossover)
-            crossPoint1 = random.Next(length-1);
+            crossPoint1 = random.Next(length - 1);
 
             //crosspoint2 -"-, has to be between crosspoint 1 and end of chromosome, again leaving at least one gene between crosspoints
-            crossPoint2= random.Next(crossPoint1+1,length);
+            crossPoint2 = random.Next(crossPoint1 + 1, length);
 
             // up to cp1 is copied from p1, between cp1 and 2 from p2, cp2 to end from p1 again
             for (j = 0; j < crossPoint1; j++)
@@ -123,7 +120,7 @@ namespace PathFinder
         public int[] uniform_crossover(int p1, int p2)
         {
             int j;
-           //TODO DOUBLE CHECK PLS
+            //TODO DOUBLE CHECK PLS
             for (j = 0; j < length; j++)
                 if (random.Next() >= 0.5)
                 {
@@ -154,38 +151,48 @@ namespace PathFinder
         // myMutate:  add your own function here
         public int[] myMutate(int[] child)
         {
-            // at the moment this just returns the (unmutated)
-            // child
+            //TODO direct towards "weak parts of chromosome" but how lol
+            //increments by 2 & flips two genes at a time
+            for (int j = 0; j < length; j+=2)
+                if (random.NextDouble() < mutationRate)
+                    if (child[j] == 0)
+                    {
+                        child[j] = 1;
+                        child[j + 1] = 1;
+                    }
+                    else
+                    {
+                        child[j] = 0;
+                        child[j + 1] = 0;
+                    }
             return (child);
-        }  
+        }
 
         // replace
         public void replace(int[] child, double childFitness)
         {
-            
             // find the worst in the population
             // replace the worst with the child
             // (as long as the child is better than the worst
             // (if not, child is just ignored)
 
-            double worst=fitness[0];
+            double worst = fitness[0];
             int worstIndex = 0;
 
-            for (int j=0;j<populationSize;j++)
+            for (int j = 0; j < populationSize; j++)
                 if (fitness[j] < worst)
                 {
                     worstIndex = j;
                     worst = fitness[j];
                 }
-            
+
             // now replace worst with child if child is better
             if (childFitness > worst)
             {
                 for (int j = 0; j < length; j++)
-                    population[worstIndex,j] = child[j];
+                    population[worstIndex, j] = child[j];
                 fitness[worstIndex] = childFitness;
             }
-        
         }
 
         public void myReplace(int[] child, double childFitness)
@@ -204,10 +211,10 @@ namespace PathFinder
             // current X and Y position, and the X,Y of the exit
             // max fitness is 1 when X's and Y's are equal
             int DiffX, DiffY;
-            
+
             DiffX = Math.Abs(x - endX);
             DiffY = Math.Abs(y - endY);
-            return (1 / (double)(DiffX + DiffY + 1));
+            return (1 / (double) (DiffX + DiffY + 1));
         }
 
 
@@ -217,7 +224,7 @@ namespace PathFinder
         //  You should NOT need to modify any of these methods
         //******************************************************
 
-        
+
         public int[] getRoute(int index)
         {
             // this returns an integer array containing 
@@ -233,22 +240,25 @@ namespace PathFinder
             // set the fitness of the chromosome with index "index"
             fitness[index] = f;
         }
+
         public double returnFitness(int index)
         {
             // return the fitness of a given chromosome to the main program
             return (fitness[index]);
         }
+
         public int getBest()
         {
             // returns the INDEX in the population of the best chromosome
-            int bestIndex=0;
+            int bestIndex = 0;
             double best = fitness[0];
-            for (int j=0;j<populationSize;j++)
+            for (int j = 0; j < populationSize; j++)
                 if (fitness[j] > best)
                 {
                     bestIndex = j;
                     best = fitness[j];
                 }
+
             return (bestIndex);
         }
 
@@ -263,6 +273,7 @@ namespace PathFinder
                     bestIndex = j;
                     best = fitness[j];
                 }
+
             return (best);
         }
     }
